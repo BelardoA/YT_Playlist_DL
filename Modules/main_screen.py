@@ -10,9 +10,8 @@ window.geometry('600x350')
 window.configure(bg='#333333')
 window.resizable(False, False)
 var = tkinter.StringVar()
-path_check_pass = tkinter.StringVar()
-path_check_fail = tkinter.StringVar()
-path_check_fail.set("❌")
+path_status = tkinter.StringVar()
+path_status.set("❌")
 
 
 def browseFiles():
@@ -26,11 +25,15 @@ def browseFiles():
     # Change label contents
     var.set(file_path)
     if exists(file_path) is True:
-        path_check_pass.set("✔️")
-        path_check_fail.set("")
+        path_status.set("✔️")
+        path_check.config(
+            fg="#00FF00"
+        )
     else:
-        path_check_pass.set("")
-        path_check_fail.set("❌")
+        path_status.set("❌")
+        path_check.config(
+            fg="#FF0000"
+        )
 
 
 def start_dl():
@@ -87,6 +90,7 @@ def start_window():
     frame = tkinter.Frame(bg='#333333')
     global file_path_input
     global pl_link_input
+    global path_check
     header_label = tkinter.Label(
         frame,
         text="YouTube Playlist Downloader",
@@ -105,24 +109,17 @@ def start_window():
         frame,
         font=("Arial", 16)
     )
-    path_pass = tkinter.Label(
+    path_check = tkinter.Label(
         frame,
-        textvariable=path_check_pass,
-        font=("Airal", 16),
-        bg="#333333",
-        fg="#00FF3A"
-    )
-    path_fail = tkinter.Label(
-        frame,
-        textvariable=path_check_fail,
-        font=("Airal", 16),
+        textvariable=path_status,
+        font=("Arial", 16),
         bg="#333333",
         fg="#FF0000"
     )
     file_path_input = tkinter.Entry(
         frame,
         textvariable=var,
-        font=("Airal", 16),
+        font=("Arial", 16),
         state="disabled"
     )
     button_explore = tkinter.Button(
@@ -163,14 +160,10 @@ def start_window():
         pady=20,
         padx=20
     )
-    path_pass.grid(
+    path_check.grid(
         row=1,
         column=2,
-        padx=10
-    )
-    path_fail.grid(
-        row=1,
-        column=2
+        padx=1
     )
     pl_link_label.grid(
         row=2,
