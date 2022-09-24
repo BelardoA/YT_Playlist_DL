@@ -83,7 +83,7 @@ def get_playlist(
             play_list = pytube.Playlist(pl_link)
             pl_title = clean_title(play_list.title)
     video = pytube.YouTube(play_list[thread])
-    track_num = thread +  1
+    track_num = thread + 1
     output_dir = os.path.join(file_path, (
         channel + ' - ' + pl_title))
     vid_output = os.path.join(output_dir, 'videos')

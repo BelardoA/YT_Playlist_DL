@@ -1,4 +1,4 @@
-import music_tag
+import taglib
 
 
 def set_info(
@@ -12,8 +12,9 @@ def set_info(
     function to set mp3 attributes for the file
     like artist, album, track # and total tracks
     """
-    mp3 = music_tag.load_file(file_path)
-    mp3.append_tag('album', album)
-    mp3.append_tag('artist', artist)
-    mp3.append_tag('tracknumber', track_num)
-    mp3.append_tag('totaltracks', total_tracks)
+    mp3 = taglib.File(file_path)
+    # delete_info(mp3=mp3)
+    mp3.tags['album'] = [album]
+    mp3.tags['artist'] = [artist]
+    mp3.tags['tracknumber'] = [f"{track_num}/{total_tracks}"]
+    mp3.save()
