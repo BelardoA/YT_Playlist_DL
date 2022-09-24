@@ -13,7 +13,6 @@ def set_info(
     like artist, album, track # and total tracks
     """
     mp3 = taglib.File(file_path)
-    # delete_info(mp3=mp3)
     mp3.tags['album'] = [album]
     mp3.tags['artist'] = [artist]
     mp3.tags['tracknumber'] = [f"{track_num}/{total_tracks}"]
