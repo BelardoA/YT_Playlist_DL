@@ -1,12 +1,14 @@
 import os
 from os.path import exists
 from moviepy.editor import VideoFileClip
+from Modules.mp3_info import set_info
 import pytube
 
 vid_path: str = ''
 files = []
 channel: str = ''
 play_list: pytube.Playlist
+total_tracks: int = 0
 
 
 def clean_title(
@@ -39,8 +41,10 @@ def get_vid_count(
     function to get the # of tracks in the
     provided YouTube playlist url
     """
+    global total_tracks
     play_list = pytube.Playlist(pl_link)
-    return play_list.length
+    total_tracks = play_list.length
+    return total_tracks
 
 
 def clean_dir():
@@ -71,7 +75,7 @@ def get_playlist(
     create x amount of threads and convert them to
     mp3 files in the given directory
     """
-    global vid_path, play_list
+    global vid_path, play_list, total_tracks
     try:
         pl_title = clean_title(play_list.title)
     except KeyError:
@@ -79,6 +83,7 @@ def get_playlist(
             play_list = pytube.Playlist(pl_link)
             pl_title = clean_title(play_list.title)
     video = pytube.YouTube(play_list[thread])
+    track_num = thread +  1
     output_dir = os.path.join(file_path, (
         channel + ' - ' + pl_title))
     vid_output = os.path.join(output_dir, 'videos')
@@ -95,6 +100,13 @@ def get_playlist(
     title = clean_title(video.title) + '.mp3'
     output = os.path.join(output_dir, title)
     vid.audio.write_audiofile(output)
+    set_info(
+        file_path=output,
+        artist=channel,
+        album=pl_title,
+        track_num=track_num,
+        total_tracks=total_tracks
+    )
     vid.close()
     print(title+' downloaded')
     try:
