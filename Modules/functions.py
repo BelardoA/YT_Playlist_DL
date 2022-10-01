@@ -1,3 +1,4 @@
+from http.client import IncompleteRead
 import os
 from os.path import exists
 from moviepy.editor import VideoFileClip
@@ -92,8 +93,12 @@ def get_playlist(
     if exists(vid_output) is False:
         os.mkdir(vid_output)
         vid_path = vid_output
-    file = video.streams.get_highest_resolution().download(
-        vid_output)
+    try:
+        file = video.streams.get_highest_resolution().download(
+            vid_output)
+    except IncompleteRead:
+        file = video.streams.get_lowest_resolution().download(
+            vid_output)
     if verify_dl(
             track=track_num,
             path=file,

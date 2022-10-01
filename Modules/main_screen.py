@@ -16,7 +16,8 @@ path_status.set("❌")
 
 def browseFiles():
     """
-    function to update the filepath status
+    function to update the filepath status and
+    submit button functionality
     """
     global file_path
     file_path = filedialog.askdirectory(
@@ -29,11 +30,13 @@ def browseFiles():
         path_check.config(
             fg="#00FF00"
         )
+        submit_btn.config(state='normal')
     else:
         path_status.set("❌")
         path_check.config(
             fg="#FF0000"
         )
+        submit_btn.config(state='disabled')
 
 
 def start_dl():
@@ -91,6 +94,7 @@ def start_window():
     global file_path_input
     global pl_link_input
     global path_check
+    global submit_btn
     header_label = tkinter.Label(
         frame,
         text="YouTube Playlist Downloader",
@@ -132,7 +136,8 @@ def start_window():
         bg="#FF5F15",
         fg="#FFFFFF",
         font=("Arial", 16),
-        command=start_dl
+        command=start_dl,
+        state="disabled"
     )
     cancel_btn = tkinter.Button(
         frame,
