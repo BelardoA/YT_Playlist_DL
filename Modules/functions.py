@@ -97,7 +97,7 @@ def get_playlist(
     if verify_dl(
             track=track_num,
             path=file,
-            vid=play_list[thread]):
+            url=play_list[thread]):
         vid = VideoFileClip(file)
         title = clean_title(video.title) + '.mp3'
         output = os.path.join(output_dir, title)
@@ -133,11 +133,14 @@ def verify_dl(
         retries = 0
         print("File or directory doesn't exist. Retrying Download")
         while exists(path) is False and retries <= 3:
+            print(f"Retry attempt #{retries}.")
             video = pytube.YouTube(url)
             file = video.streams.get_highest_resolution().download(
                 path)
             retries += 1
         if retries == 3:
+            print(f"Unable to download track {track}.")
             return None
         else:
+            print(f"Video download successful after {retries} trie(s)")
             return file
