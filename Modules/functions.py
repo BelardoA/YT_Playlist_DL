@@ -87,7 +87,6 @@ def get_playlist(
     output_dir = os.path.join(file_path, (
         channel + ' - ' + pl_title))
     vid_output = os.path.join(output_dir, 'videos')
-    vid_path = vid_path.replace("/", "\\")
     if exists(output_dir) is False:
         os.mkdir(output_dir)
     if exists(vid_output) is False:
@@ -95,21 +94,50 @@ def get_playlist(
         vid_path = vid_output
     file = video.streams.get_highest_resolution().download(
         vid_output)
-    file = file.replace("/", "\\")
-    vid = VideoFileClip(file)
-    title = clean_title(video.title) + '.mp3'
-    output = os.path.join(output_dir, title)
-    vid.audio.write_audiofile(output)
-    set_info(
-        file_path=output,
-        artist=channel,
-        album=pl_title,
-        track_num=track_num,
-        total_tracks=total_tracks
-    )
-    vid.close()
-    print(title+' downloaded')
-    try:
-        os.remove(file)
-    except PermissionError:
-        files.append(file)
+    if verify_dl(
+            track=track_num,
+            path=file,
+            vid=play_list[thread]):
+        vid = VideoFileClip(file)
+        title = clean_title(video.title) + '.mp3'
+        output = os.path.join(output_dir, title)
+        vid.audio.write_audiofile(output)
+        set_info(
+            file_path=output,
+            artist=channel,
+            album=pl_title,
+            track_num=track_num,
+            total_tracks=total_tracks
+        )
+        vid.close()
+        print(title+' downloaded')
+        try:
+            os.remove(file)
+        except PermissionError:
+            files.append(file)
+
+
+def verify_dl(
+        track: int,
+        path: str,
+        url: str
+        ):
+    """
+    function to verify video was downloaded, if not
+    it will retry three times before returning none
+    """
+    if exists(path):
+        print(f'File download verified for track {track}.')
+        return path
+    else:
+        retries = 0
+        print("File or directory doesn't exist. Retrying Download")
+        while exists(path) is False and retries <= 3:
+            video = pytube.YouTube(url)
+            file = video.streams.get_highest_resolution().download(
+                path)
+            retries += 1
+        if retries == 3:
+            return None
+        else:
+            return file
