@@ -1,50 +1,59 @@
 from http.client import IncompleteRead
+import logging
 import os
 from os.path import exists
+from typing import Optional
+
 from moviepy.editor import VideoFileClip
 from Modules.mp3_info import set_info
 import pytube
 
-vid_path: str = ''
+logger = logging.getLogger(__name__)
+
+vid_path: str = ""
 files = []
-channel: str = ''
+channel: str = ""
 play_list: pytube.Playlist
 total_tracks: int = 0
 
 
-def clean_title(
-        dirty: str
-        ) -> str:
+def clean_title(dirty: str) -> str:
     """
     function to remove inapproriate characters
     from a file name to prevent errors
     """
+    logger.info(f"Cleaning title: {dirty}")
     clean: str = dirty.translate(
-        {ord(c): "" for c in '\\!@#$%^&*()[]{};:,./<>?|`~=_+"'})
+        {ord(c): "" for c in '\\!@#$%^&*()[]{};:,./<>?|`~=_+"'}
+    )
+    logger.info(f"Cleaned title: {clean}")
     return clean
 
 
-def get_channel(
-        pl_link: str
-        ) -> str:
+def get_channel(pl_link: str):
     global channel, play_list
-    play_list = pytube.Playlist(pl_link)
-    video = play_list.videos[0]
-    chan = pytube.Channel(video.channel_url)
-    channel = clean_title(chan.channel_name).replace('- Topic', '').strip(' ')
-    return channel
+    logger.info(f"Getting channel: {pl_link}")
+    if play_list := pytube.Playlist(pl_link):
+        chan = pytube.Channel(play_list.owner_url)
+        channel = (
+            clean_title(chan.channel_name).replace("- Topic", "").strip(" ")
+            or "Unknown Channel"
+        )
+        logger.info(f"Channel: {channel}")
+    else:
+        logger.error("Unable to find playlist.")
 
 
-def get_vid_count(
-        pl_link: str
-        ) -> int:
+def get_vid_count(pl_link: str) -> int:
     """
     function to get the # of tracks in the
     provided YouTube playlist url
     """
     global total_tracks
+    logger.info(f"Getting video count: {pl_link}")
     play_list = pytube.Playlist(pl_link)
     total_tracks = play_list.length
+    logger.info(f"Total tracks: {total_tracks}")
     return total_tracks
 
 
@@ -55,22 +64,19 @@ def clean_dir():
     the audio to create mp3 files
     """
     files = os.listdir(vid_path)
+    logger.info(f"Cleaning directory: {vid_path}")
     for file in files:
         os.chdir(vid_path)
         try:
             os.remove(file)
+            logger.info(f"Deleted {file}")
         except PermissionError:
-            print('Unable to delete {}'.format(
-                file
-            ))
+            logger.error(f"Unable to delete {file}")
     os.rmdir(vid_path)
+    logger.info(f"Deleted directory: {vid_path}")
 
 
-def get_playlist(
-        pl_link: str,
-        file_path: str,
-        thread: int
-        ):
+def get_playlist(pl_link: str, file_path: str, thread: int):
     """
     function to iterate through playlist tracks
     create x amount of threads and convert them to
@@ -79,32 +85,30 @@ def get_playlist(
     global vid_path, play_list, total_tracks
     try:
         pl_title = clean_title(play_list.title)
+        logger.info(f"Playlist title: {pl_title}")
     except KeyError:
         while type(play_list.length) == str:
             play_list = pytube.Playlist(pl_link)
             pl_title = clean_title(play_list.title)
-    video = pytube.YouTube(play_list[thread])
+            logger.info(f"Playlist title: {pl_title}")
+    video = pytube.YouTube(play_list[thread], use_oauth=True)
     track_num = thread + 1
-    output_dir = os.path.join(file_path, (
-        channel + ' - ' + pl_title))
-    vid_output = os.path.join(output_dir, 'videos')
+    output_dir = os.path.join(file_path, (channel + " - " + pl_title))
+    vid_output = os.path.join(output_dir, "videos")
     if exists(output_dir) is False:
         os.mkdir(output_dir)
+        logger.info(f"Created output directory: {output_dir}")
     if exists(vid_output) is False:
         os.mkdir(vid_output)
+        logger.info(f"Created video directory: {vid_output}")
         vid_path = vid_output
     try:
-        file = video.streams.get_highest_resolution().download(
-            vid_output)
+        file = video.streams.get_highest_resolution().download(vid_output)
     except IncompleteRead:
-        file = video.streams.get_lowest_resolution().download(
-            vid_output)
-    if verify_dl(
-            track=track_num,
-            path=file,
-            url=play_list[thread]):
+        file = video.streams.get_lowest_resolution().download(vid_output)
+    if verify_dl(track=track_num, path=file, url=play_list[thread]):
         vid = VideoFileClip(file)
-        title = clean_title(video.title) + '.mp3'
+        title = clean_title(video.title) + ".mp3"
         output = os.path.join(output_dir, title)
         vid.audio.write_audiofile(output)
         set_info(
@@ -112,40 +116,35 @@ def get_playlist(
             artist=channel,
             album=pl_title,
             track_num=track_num,
-            total_tracks=total_tracks
+            total_tracks=total_tracks,
         )
         vid.close()
-        print(title+' downloaded')
+        logger.info(f"{title} downloaded")
         try:
             os.remove(file)
         except PermissionError:
             files.append(file)
 
 
-def verify_dl(
-        track: int,
-        path: str,
-        url: str
-        ):
+def verify_dl(track: int, path: str, url: str):
     """
     function to verify video was downloaded, if not
     it will retry three times before returning none
     """
     if exists(path):
-        print(f'File download verified for track {track}.')
+        logger.info(f"File download verified for track {track}.")
         return path
     else:
         retries = 0
-        print("File or directory doesn't exist. Retrying Download")
+        logger.info("File or directory doesn't exist. Retrying Download")
         while exists(path) is False and retries <= 3:
-            print(f"Retry attempt #{retries}.")
+            logger.info(f"Retry attempt #{retries}.")
             video = pytube.YouTube(url)
-            file = video.streams.get_highest_resolution().download(
-                path)
+            file = video.streams.get_highest_resolution().download(path)
             retries += 1
         if retries == 3:
-            print(f"Unable to download track {track}.")
+            logger.error(f"Unable to download track {track}.")
             return None
         else:
-            print(f"Video download successful after {retries} trie(s)")
+            logger.info(f"Video download successful after {retries} tries")
             return file
