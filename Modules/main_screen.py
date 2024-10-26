@@ -1,10 +1,10 @@
 import tkinter
 import logging
+
 from typing import Optional
 from tkinter import messagebox, filedialog
 from os.path import exists
-from Modules.threads import start_threads
-from Modules.functions import get_channel, get_vid_count, clean_dir
+from Modules.functions import PlaylistDownloader, clean_dir
 
 window = tkinter.Tk()
 window.title("Playlist Downloader")
@@ -14,6 +14,7 @@ window.resizable(False, False)
 var = tkinter.StringVar()
 path_status = tkinter.StringVar()
 path_status.set("❌")
+FONT = ("Arial", 16)
 logger = logging.getLogger(__name__)
 
 
@@ -48,12 +49,16 @@ def start_dl(pl_link: Optional[str] = None, output_dir: Optional[str] = None):
         # If '&app=' is found, return the substring before it
         if pp_index != -1:
             pl_link = pl_link[:pp_index]
-        logger.info("Getting channel info...")
-        get_channel(pl_link=pl_link)
         logger.info("Getting video count...")
-        threads = get_vid_count(pl_link=pl_link)
-        logger.info("Starting threads...")
-        start_threads(thread_cnt=threads, pl_link=pl_link, file_path=output_dir)
+        pl_downloader = PlaylistDownloader(pl_link=pl_link, output_dir=output_dir)
+        # TODO: implement pop up message for user to authenticate the session
+        messagebox.showinfo(
+            title="Please authenticate the session!",
+            message="In order to download the videos, please validate the session by visiting {} and entering this code: {}",
+        )
+        threads = pl_downloader.total_tracks
+        logger.info(f"Starting {threads} download(s)...")
+        pl_downloader.run()
         clean_dir()
         logger.info("Showing completion message...")
         messagebox.showinfo(
@@ -100,20 +105,20 @@ def start_window():
     global submit_btn
     header_label = tkinter.Label(
         frame,
-        text="YouTube Playlist Downloader",
+        text="YouTube Playlist MP3 Downloader",
         bg="#333333",
         fg="#FF5F15",
         font=("Arial", 30),
     )
     pl_link_label = tkinter.Label(
-        frame, text="Playlist Link:", bg="#333333", fg="#FFFFFF", font=("Arial", 16)
+        frame, text="Playlist Link:", bg="#333333", fg="#FFFFFF", font=FONT
     )
-    pl_link_input = tkinter.Entry(frame, font=("Arial", 16))
+    pl_link_input = tkinter.Entry(frame, font=FONT)
     path_check = tkinter.Label(
-        frame, textvariable=path_status, font=("Arial", 16), bg="#333333", fg="#FF0000"
+        frame, textvariable=path_status, font=FONT, bg="#333333", fg="#FF0000"
     )
     file_path_input = tkinter.Entry(
-        frame, textvariable=var, font=("Arial", 16), state="disabled"
+        frame, textvariable=var, font=FONT, state="disabled"
     )
     button_explore = tkinter.Button(frame, text="Save Location", command=browse_files)
     submit_btn = tkinter.Button(
@@ -121,7 +126,7 @@ def start_window():
         text="Start",
         bg="#FF5F15",
         fg="#FFFFFF",
-        font=("Arial", 16),
+        font=FONT,
         command=start_dl,
         state="disabled",
     )
@@ -130,7 +135,7 @@ def start_window():
         text="Quit",
         bg="#FF0000",
         fg="#FFFFFF",
-        font=("Arial", 16),
+        font=FONT,
         command=quit_app,
     )
     header_label.grid(row=0, column=0, columnspan=2, sticky="news", pady=20, padx=20)
