@@ -54,7 +54,7 @@ def start_dl(pl_link: Optional[str] = None, output_dir: Optional[str] = None):
         # TODO: implement pop up message for user to authenticate the session
         messagebox.showinfo(
             title="Please authenticate the session!",
-            message="In order to download the videos, please validate the session by visiting {} and entering this code: {}",
+            message=pl_downloader.youtube.get_auth_url(),
         )
         threads = pl_downloader.total_tracks
         logger.info(f"Starting {threads} download(s)...")
@@ -149,3 +149,10 @@ def start_window():
     frame.pack()
 
     window.mainloop()
+
+
+if __name__ == "__main__":
+    start_dl(
+        "https://www.youtube.com/watch?v=TyIqEFN7k2s&list=PLWm0sL3_hdvwgPmZ3Icm7lASidbCjFWs0&pp=iAQB",
+        "/home/virus/Documents/Python/YT_Playlist_DL/downloads",
+    )

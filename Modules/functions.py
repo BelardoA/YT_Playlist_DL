@@ -27,14 +27,17 @@ class PlaylistDownloader:
     pl_title: str
     output_dir: str
     total_tracks: int = 0
-    # TODO: add pytube.YouTube object to class
+    video_urls: list[str] = []
+    youtube: pytube.YouTube
 
     def __init__(self, pl_link: str, output_dir: str):
         self.pl_link = pl_link
+        self.play_list = pytube.Playlist(self.pl_link)
         self.pl_title = self.clean_playlist_title()
         self.output_dir = output_dir
         self.get_channel_and_playlist()
         self.get_vid_count()
+        self.youtube = pytube.YouTube(self.pl_link, use_oauth=True)
 
     def clean_playlist_title(self) -> str:
         """
