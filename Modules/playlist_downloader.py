@@ -1,6 +1,7 @@
 """
 Module to download a YouTube playlist and convert the videos to mp3 files
 """
+import requests
 import logging
 import os
 from http.client import IncompleteRead
@@ -31,6 +32,7 @@ class PlaylistDownloader:
     youtube: pytube.YouTube
     downloaded_files: list[str] = []
     failed_downloads: list[str] = []
+    cover_art_link: Optional[str] = None
 
     def __init__(self, pl_link: str, output_dir: str):
         self.pl_link = pl_link
@@ -40,6 +42,25 @@ class PlaylistDownloader:
         self.output_dir = output_dir
         self.channel = self.play_list.owner
         self.total_tracks = self.play_list.length
+        self.get_cover_art_url()
+
+    def get_cover_art_url(self):
+        """
+        function to get the cover art image url for the playlist
+        """
+        thumbnail_urls = []
+        for item in self.play_list.sidebar_info:
+            if 'playlistSidebarPrimaryInfoRenderer' in item:
+                thumbnails = item['playlistSidebarPrimaryInfoRenderer'].get('thumbnailRenderer', {}).get(
+                    'playlistVideoThumbnailRenderer', {}).get('thumbnail', {}).get('thumbnails', [])
+                for thumbnail in thumbnails:
+                    thumbnail_urls.append(thumbnail['url'])
+            elif 'playlistSidebarSecondaryInfoRenderer' in item:
+                thumbnails = item['playlistSidebarSecondaryInfoRenderer'].get('videoOwner', {}).get(
+                    'videoOwnerRenderer', {}).get('thumbnail', {}).get('thumbnails', [])
+                for thumbnail in thumbnails:
+                    thumbnail_urls.append(thumbnail['url'])
+        self.cover_art_link = thumbnail_urls[0] if thumbnail_urls else None
 
     def clean_playlist_title(self) -> str:
         """
@@ -166,6 +187,15 @@ class PlaylistDownloader:
         self._verify_and_create_directory(music_dir)
         video_dir = os.path.join(music_dir, "videos")
         self._verify_and_create_directory(video_dir)
+        if self.cover_art_link:
+            logger.info("Downloading cover art...")
+            res = requests.get(self.cover_art_link)
+            if res.ok:
+                with open(os.path.join(music_dir, "cover.jpg"), "wb") as f:
+                    f.write(res.content)
+                logger.info("Cover art downloaded successfully.")
+            else:
+                logger.error("Unable to download cover art.")
         for video in track(
                 self.play_list_videos,
                 description=f"Downloading {len(self.play_list_videos)} video(s)..."
