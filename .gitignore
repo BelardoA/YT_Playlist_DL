@@ -1,2 +1,4 @@
 Modules/__pycache__/*
 Test/*
+venv/*
+.idea/*
