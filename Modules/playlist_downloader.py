@@ -30,6 +30,7 @@ class PlaylistDownloader:
     total_tracks: int = 0
     youtube: pytube.YouTube
     downloaded_files: list[str] = []
+    failed_downloads: list[str] = []
 
     def __init__(self, pl_link: str, output_dir: str):
         self.pl_link = pl_link
@@ -102,6 +103,7 @@ class PlaylistDownloader:
                 file = video.streams.get_lowest_resolution().download(video_dir)
             except IncompleteRead:
                 logger.error(f"Unable to download {video.title}. Skipping...")
+                self.failed_downloads.append(video.title)
                 return
         if self.verify_dl(track_num=track_num, path=file, url=video_url):
             vid = VideoFileClip(file)
