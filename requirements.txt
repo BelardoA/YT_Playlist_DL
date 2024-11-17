@@ -1,4 +1,4 @@
-moviepy
+moviepy~=1.0.3
 pytube2
 pytaglib
-rich
+rich~=13.9.3
