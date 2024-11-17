@@ -76,9 +76,15 @@ def start_dl(pl_link: Optional[str] = None, output_dir: Optional[str] = None) ->
         logger.info("Showing completion message...")
         messagebox.showinfo(
             title="Mission Complete!",
-            message="Playlist has been downloaded. {} tracks".format(pl_downloader.total_tracks)
-            + " have been downloaded.",
+            message=f"Playlist has been downloaded. {pl_downloader.downloaded_files}/{pl_downloader.total_tracks} "
+            + "tracks have been downloaded.",
         )
+        if pl_downloader.failed_downloads:
+            failures = '\n'.join(pl_downloader.failed_downloads)
+            messagebox.showinfo(
+                title="Failed Downloads",
+                message=f"The following tracks failed to download: {failures}",
+            )
     else:
         logger.error("Information Missing!")
         messagebox.showerror(
