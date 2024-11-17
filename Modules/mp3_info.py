@@ -1,13 +1,22 @@
+"""
+Module to set mp3 attributes like artist, album, track number and total tracks
+"""
 import taglib
 import logging
 
 
 def set_info(
     file_path: str, artist: str, album: str, track_num: int, total_tracks: int
-):
+) -> None:
     """
-    function to set mp3 attributes for the file
-    like artist, album, track # and total tracks
+    function to set mp3 attributes for the file like artist, album, track # and total tracks
+
+    :param str file_path: the path to the mp3 file
+    :param str artist: the artist name
+    :param str album: the album name
+    :param int track_num: the track number
+    :param int total_tracks: the total tracks in the album
+    :rtype: None
     """
     logger = logging.getLogger(__name__)
     logger.info("Setting mp3 info...")

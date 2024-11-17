@@ -1,10 +1,12 @@
 import tkinter
 import logging
+import re
+from urllib.parse import urlparse
 
 from typing import Optional
 from tkinter import messagebox, filedialog
 from os.path import exists
-from Modules.functions import PlaylistDownloader, clean_dir
+from Modules.playlist_downloader import PlaylistDownloader
 
 window = tkinter.Tk()
 window.title("Playlist Downloader")
@@ -17,6 +19,19 @@ path_status.set("❌")
 FONT = ("Arial", 16)
 logger = logging.getLogger(__name__)
 
+
+def _format_playlist_link(pl_link: str) -> str:
+    """
+    Function to format the playlist link to a valid playlist link for PyTube
+
+    :param str pl_link: the playlist link
+    :return: the formatted playlist link
+    :rtype: str
+    """
+    url_parts = urlparse(pl_link)
+    if match := re.search(r'&list=([^&]+)', pl_link):
+        return f"{url_parts.scheme}://{url_parts.hostname}/playlist?list={match.group(1)}"
+    return pl_link
 
 def browse_files():
     """
@@ -37,33 +52,31 @@ def browse_files():
         submit_btn.config(state="disabled")
 
 
-def start_dl(pl_link: Optional[str] = None, output_dir: Optional[str] = None):
+def start_dl(pl_link: Optional[str] = None, output_dir: Optional[str] = None) -> None:
     """
     start the process of downloading the playlist
+
+    :param Optional[str] pl_link: the playlist link
+    :param Optional[str] output_dir: the output directory
+    :rtype: None
     """
     pl_link = pl_link or pl_link_input.get()
     output_dir = output_dir or file_path_input.get()
     if pl_link != "" and output_dir != "":
         # Find the index of '&app='
-        pp_index = pl_link.find("&pp=")
-        # If '&app=' is found, return the substring before it
-        if pp_index != -1:
-            pl_link = pl_link[:pp_index]
+        pl_link = _format_playlist_link(pl_link)
         logger.info("Getting video count...")
         pl_downloader = PlaylistDownloader(pl_link=pl_link, output_dir=output_dir)
-        # TODO: implement pop up message for user to authenticate the session
+        logger.info(f"Starting {pl_downloader.total_tracks} download(s)...")
         messagebox.showinfo(
-            title="Please authenticate the session!",
-            message=pl_downloader.youtube.get_auth_url(),
+            title="Authentication Required",
+            message="Please check terminal and follow the instructions to authenticate the session."
         )
-        threads = pl_downloader.total_tracks
-        logger.info(f"Starting {threads} download(s)...")
         pl_downloader.run()
-        clean_dir()
         logger.info("Showing completion message...")
         messagebox.showinfo(
             title="Mission Complete!",
-            message="Playlist has been downloaded. {} tracks".format(threads)
+            message="Playlist has been downloaded. {} tracks".format(pl_downloader.total_tracks)
             + " have been downloaded.",
         )
     else:
@@ -149,10 +162,3 @@ def start_window():
     frame.pack()
 
     window.mainloop()
-
-
-if __name__ == "__main__":
-    start_dl(
-        "https://www.youtube.com/watch?v=TyIqEFN7k2s&list=PLWm0sL3_hdvwgPmZ3Icm7lASidbCjFWs0&pp=iAQB",
-        "/home/virus/Documents/Python/YT_Playlist_DL/downloads",
-    )

@@ -1,8 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """ Rich Logging """
 
-# standard python imports
 import logging
 import os
 import tempfile
