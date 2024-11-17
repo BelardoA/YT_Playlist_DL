@@ -5,7 +5,6 @@ import logging
 import os
 from http.client import IncompleteRead
 from os.path import exists
-from tkinter import messagebox
 from typing import Optional
 
 import pytube
@@ -95,13 +94,15 @@ class PlaylistDownloader:
         """
         video = pytube.YouTube(video_url, use_oauth=True)
         try:
+            logger.info(f"Downloading video: {video.title}")
             file = video.streams.get_highest_resolution().download(video_dir)
         except IncompleteRead:
-            messagebox.showerror(
-                title="Error",
-                message="An error occurred while downloading the video. Trying again with a lower resolution."
-            )
-            file = video.streams.get_lowest_resolution().download(video_dir)
+            logger.warning(f"An error occurred while downloading {video.title}. Trying again with a lower resolution.")
+            try:
+                file = video.streams.get_lowest_resolution().download(video_dir)
+            except IncompleteRead:
+                logger.error(f"Unable to download {video.title}. Skipping...")
+                return
         if self.verify_dl(track_num=track_num, path=file, url=video_url):
             vid = VideoFileClip(file)
             title = self.clean_title(video.title) + ".mp3"
