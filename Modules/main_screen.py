@@ -73,14 +73,20 @@ def start_dl(pl_link: Optional[str] = None, output_dir: Optional[str] = None) ->
             message="Please check terminal and follow the instructions to authenticate the session."
         )
         pl_downloader.run()
-        logger.info("Showing completion message...")
+        logger.info(
+            "Download complete! Downloaded %i/%i file(s): %s",
+            len(pl_downloader.downloaded_files),
+            pl_downloader.total_tracks,
+            "\n".join(pl_downloader.downloaded_files),
+        )
         messagebox.showinfo(
             title="Mission Complete!",
-            message=f"Playlist has been downloaded. {pl_downloader.downloaded_files}/{pl_downloader.total_tracks} "
+            message=f"Playlist has been downloaded. {len(pl_downloader.downloaded_files)}/{pl_downloader.total_tracks} "
             + "tracks have been downloaded.",
         )
         if pl_downloader.failed_downloads:
-            failures = '\n'.join(pl_downloader.failed_downloads)
+            failures = "\n".join(pl_downloader.failed_downloads)
+            logger.error(f"The following tracks failed to download: {failures}")
             messagebox.showinfo(
                 title="Failed Downloads",
                 message=f"The following tracks failed to download: {failures}",
