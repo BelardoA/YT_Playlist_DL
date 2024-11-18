@@ -2,3 +2,4 @@ moviepy~=1.0.3
 pytube2
 pytaglib
 rich~=13.9.3
+requests
