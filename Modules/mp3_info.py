@@ -1,8 +1,10 @@
 """
 Module to set mp3 attributes like artist, album, track number and total tracks
 """
-import taglib
+
 import logging
+
+import taglib
 
 
 def set_info(
@@ -22,9 +24,9 @@ def set_info(
     logger.info("Setting mp3 info...")
     mp3 = taglib.File(file_path)
     mp3.tags["album"] = [album]
-    logger.info(f"Album: {album}")
+    logger.info("Album: %s", album)
     mp3.tags["artist"] = [artist]
-    logger.info(f"Artist: {artist}")
+    logger.info("Artist: %s", artist)
     mp3.tags["tracknumber"] = [f"{track_num}/{total_tracks}"]
-    logger.info(f"Track number: {track_num}/{total_tracks}")
+    logger.info("Track number: %i/%i", track_num, total_tracks)
     mp3.save()

@@ -1,11 +1,16 @@
-import tkinter
+"""
+This module contains the main screen of the program
+"""
+
 import logging
 import re
+import sys
+import tkinter
+from os.path import exists
+from tkinter import messagebox, filedialog
+from typing import Optional
 from urllib.parse import urlparse
 
-from typing import Optional
-from tkinter import messagebox, filedialog
-from os.path import exists
 from Modules.playlist_downloader import PlaylistDownloader
 
 window = tkinter.Tk()
@@ -18,6 +23,7 @@ path_status = tkinter.StringVar()
 path_status.set("❌")
 FONT = ("Arial", 16)
 logger = logging.getLogger(__name__)
+FILE_PATH = ""
 
 
 def _format_playlist_link(pl_link: str) -> str:
@@ -29,20 +35,23 @@ def _format_playlist_link(pl_link: str) -> str:
     :rtype: str
     """
     url_parts = urlparse(pl_link)
-    if match := re.search(r'&list=([^&]+)', pl_link):
-        return f"{url_parts.scheme}://{url_parts.hostname}/playlist?list={match.group(1)}"
+    if match := re.search(r"&list=([^&]+)", pl_link):
+        return (
+            f"{url_parts.scheme}://{url_parts.hostname}/playlist?list={match.group(1)}"
+        )
     return pl_link
+
 
 def browse_files():
     """
     function to update the filepath status and
     submit button functionality
     """
-    global file_path
-    file_path = filedialog.askdirectory(initialdir="/", title="Select a Folder")
+    global FILE_PATH
+    FILE_PATH = filedialog.askdirectory(initialdir="/", title="Select a Folder")
     # Change label contents
-    var.set(file_path)
-    if exists(file_path) is True:
+    var.set(FILE_PATH)
+    if exists(FILE_PATH) is True:
         path_status.set("✔️")
         path_check.config(fg="#00FF00")
         submit_btn.config(state="normal")
@@ -67,10 +76,10 @@ def start_dl(pl_link: Optional[str] = None, output_dir: Optional[str] = None) ->
         pl_link = _format_playlist_link(pl_link)
         logger.info("Getting video count...")
         pl_downloader = PlaylistDownloader(pl_link=pl_link, output_dir=output_dir)
-        logger.info(f"Starting {pl_downloader.total_tracks} download(s)...")
+        logger.info("Starting %i download(s)...", pl_downloader.total_tracks)
         messagebox.showinfo(
             title="Authentication Required",
-            message="Please check terminal and follow the instructions to authenticate the session."
+            message="Please watch terminal and follow instructions to authenticate the session.",
         )
         pl_downloader.run()
         logger.info(
@@ -81,12 +90,12 @@ def start_dl(pl_link: Optional[str] = None, output_dir: Optional[str] = None) ->
         )
         messagebox.showinfo(
             title="Mission Complete!",
-            message=f"Playlist has been downloaded. {len(pl_downloader.downloaded_files)}/{pl_downloader.total_tracks} "
-            + "tracks have been downloaded.",
+            message=f"Playlist has been downloaded. {len(pl_downloader.downloaded_files)}"
+            f"/{pl_downloader.total_tracks} tracks have been downloaded.",
         )
         if pl_downloader.failed_downloads:
             failures = "\n".join(pl_downloader.failed_downloads)
-            logger.error(f"The following tracks failed to download: {failures}")
+            logger.error("The following tracks failed to download: %s", failures)
             messagebox.showinfo(
                 title="Failed Downloads",
                 message=f"The following tracks failed to download: {failures}",
@@ -106,7 +115,7 @@ def quit_app():
     """
     logger.info("Quitting application...")
     window.destroy()
-    exit()
+    sys.exit()
 
 
 def close_window():
